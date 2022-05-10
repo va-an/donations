@@ -1,25 +1,27 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
-use near_sdk::{env, log, near_bindgen};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance};
 use serde::{Deserialize, Serialize};
-
-near_sdk::setup_alloc!();
 
 #[near_bindgen]
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct Donations {
-    donations: Vector<Record>,
+    records: Vector<Record>,
+    sum: Balance,
 }
 
 impl Default for Donations {
     fn default() -> Self {
         Self {
-            donations: Vector::new(b"r-".to_vec()),
+            records: Vector::new(b"r".to_vec()),
+            sum: 0,
         }
     }
 }
 
-fn from_yocto_near(yocto_near: u128) -> f64 {
+type BalanceHumanReadable = f64;
+
+fn from_yocto_near(yocto_near: Balance) -> BalanceHumanReadable {
     format!(
         "{:.2}",
         yocto_near as f64 / 1_000_000_000_000_000_000_000_000.0
@@ -30,23 +32,23 @@ fn from_yocto_near(yocto_near: u128) -> f64 {
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct Record {
-    from: String,
-    donation: u128,
+    from: AccountId,
+    donation: Balance,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct RecordJson {
-    from: String,
-    donation: f64,
+    from: AccountId,
+    donation: BalanceHumanReadable,
 }
 
 #[near_bindgen]
 impl Donations {
     #[payable]
     pub fn send_donation(&mut self) {
-        let donation_yocto = env::attached_deposit();
-        let donation = from_yocto_near(donation_yocto);
+        let donation_yocto: Balance = env::attached_deposit();
+        let donation: BalanceHumanReadable = from_yocto_near(donation_yocto);
 
         let sender = env::signer_account_id();
 
@@ -55,19 +57,20 @@ impl Donations {
             donation: donation_yocto,
         };
 
-        self.donations.push(&record);
+        self.records.push(&record);
+        self.sum += donation_yocto;
 
-        // TODO: formatting for attached deposit
         log!("attached_deposit: {} from {}", donation, sender);
     }
 
     pub fn withdraw_donations(&mut self) {
+        self.sum = 0;
         // TODO: implement function
         // TODO: allow only for contract creator
     }
 
     pub fn show_donations(&self) -> Vec<RecordJson> {
-        self.donations
+        self.records
             .iter()
             .map(|record| RecordJson {
                 from: record.from,
@@ -76,8 +79,7 @@ impl Donations {
             .collect()
     }
 
-    pub fn show_donations_sum(&self) -> u128 {
-        // TODO: implement
-        todo!()
+    pub fn show_donations_sum(&self) -> BalanceHumanReadable {
+        from_yocto_near(self.sum)
     }
 }

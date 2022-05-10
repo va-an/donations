@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
-near-sdk = "3.1.0"
+near-sdk = "4.0.0-pre.8"
 
 [profile.release]
 codegen-units = 1
