@@ -19,23 +19,40 @@ impl Default for Donations {
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
+fn from_yocto_near(yocto_near: u128) -> f64 {
+    format!(
+        "{:.2}",
+        yocto_near as f64 / 1_000_000_000_000_000_000_000_000.0
+    )
+    .parse::<f64>()
+    .unwrap()
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
 pub struct Record {
     from: String,
     donation: u128,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct RecordJson {
+    from: String,
+    donation: f64,
 }
 
 #[near_bindgen]
 impl Donations {
     #[payable]
     pub fn send_donation(&mut self) {
-        let donation = env::attached_deposit();
+        let donation_yocto = env::attached_deposit();
+        let donation = from_yocto_near(donation_yocto);
+
         let sender = env::signer_account_id();
 
         let record = Record {
             from: sender.clone(),
-            donation,
+            donation: donation_yocto,
         };
 
         self.donations.push(&record);
@@ -49,8 +66,14 @@ impl Donations {
         // TODO: allow only for contract creator
     }
 
-    pub fn show_donations(&self) -> Vec<Record> {
-        return self.donations.to_vec();
+    pub fn show_donations(&self) -> Vec<RecordJson> {
+        self.donations
+            .iter()
+            .map(|record| RecordJson {
+                from: record.from,
+                donation: from_yocto_near(record.donation),
+            })
+            .collect()
     }
 
     pub fn show_donations_sum(&self) -> u128 {
