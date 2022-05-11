@@ -1,6 +1,6 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
-use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise};
+use near_sdk::{env, log, near_bindgen, require, AccountId, Balance, PanicOnDefault, Promise};
 use serde::{Deserialize, Serialize};
 
 #[near_bindgen]
@@ -62,11 +62,15 @@ impl Donations {
     }
 
     pub fn withdraw_donations(&mut self) -> Promise {
+        require!(
+            env::signer_account_id() == self.fundraiser,
+            "Owner's method"
+        );
+
+        let transfer_amount = self.sum;
         self.sum = 0;
 
-        Promise::new(self.fundraiser.clone()).transfer(self.sum)
-        // TODO: implement function
-        // TODO: allow only for contract creator
+        Promise::new(self.fundraiser.clone()).transfer(transfer_amount)
     }
 
     pub fn show_donations(&self) -> Vec<RecordJson> {
@@ -81,5 +85,9 @@ impl Donations {
 
     pub fn show_donations_sum(&self) -> BalanceHumanReadable {
         from_yocto_near(self.sum)
+    }
+
+    pub fn show_fundraiser(&self) -> AccountId {
+        self.fundraiser.clone()
     }
 }
