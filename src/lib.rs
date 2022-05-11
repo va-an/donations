@@ -1,33 +1,22 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
-use near_sdk::{env, log, near_bindgen, AccountId, Balance};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise};
 use serde::{Deserialize, Serialize};
 
 #[near_bindgen]
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(BorshSerialize, BorshDeserialize, PanicOnDefault)]
 pub struct Donations {
     records: Vector<Record>,
     sum: Balance,
-}
-
-impl Default for Donations {
-    fn default() -> Self {
-        Self {
-            records: Vector::new(b"r".to_vec()),
-            sum: 0,
-        }
-    }
+    fundraiser: AccountId,
 }
 
 type BalanceHumanReadable = f64;
 
 fn from_yocto_near(yocto_near: Balance) -> BalanceHumanReadable {
-    format!(
-        "{:.2}",
-        yocto_near as f64 / 1_000_000_000_000_000_000_000_000.0
-    )
-    .parse::<f64>()
-    .unwrap()
+    format!("{:.2}", yocto_near as f64 / 1e24)
+        .parse::<f64>()
+        .unwrap()
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]
@@ -45,6 +34,15 @@ pub struct RecordJson {
 
 #[near_bindgen]
 impl Donations {
+    #[init]
+    pub fn new(fundraiser: AccountId) -> Self {
+        Self {
+            records: Vector::new(b"r".to_vec()),
+            sum: 0,
+            fundraiser,
+        }
+    }
+
     #[payable]
     pub fn send_donation(&mut self) {
         let donation_yocto: Balance = env::attached_deposit();
@@ -63,8 +61,10 @@ impl Donations {
         log!("attached_deposit: {} from {}", donation, sender);
     }
 
-    pub fn withdraw_donations(&mut self) {
+    pub fn withdraw_donations(&mut self) -> Promise {
         self.sum = 0;
+
+        Promise::new(self.fundraiser.clone()).transfer(self.sum)
         // TODO: implement function
         // TODO: allow only for contract creator
     }
