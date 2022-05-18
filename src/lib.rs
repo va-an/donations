@@ -11,7 +11,7 @@ fn from_yocto_near(yocto_near: Balance) -> BalanceHumanReadable {
         .unwrap()
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize)]
 pub struct Record {
     from: AccountId,
     donation: Balance,
@@ -22,6 +22,12 @@ pub struct Record {
 pub struct RecordJson {
     from: AccountId,
     donation: BalanceHumanReadable,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DebugState {
+    records: Vec<RecordJson>,
+    sum: BalanceHumanReadable,
 }
 
 #[near_bindgen]
@@ -73,22 +79,31 @@ impl Donations {
         Promise::new(self.fundraiser.clone()).transfer(transfer_amount)
     }
 
-    pub fn show_donations(&self) -> Vec<RecordJson> {
-        self.records
+    pub fn show_donations(&self) -> Vec<Record> {
+        self.records.to_vec()
+    }
+
+    pub fn show_donations_sum(&self) -> Balance {
+        self.sum
+    }
+
+    pub fn show_fundraiser(&self) -> AccountId {
+        self.fundraiser.clone()
+    }
+
+    pub fn current_state(&self) -> DebugState {
+        let records = self
+            .records
             .iter()
             .map(|record| RecordJson {
                 from: record.from,
                 donation: from_yocto_near(record.donation),
             })
-            .collect()
-    }
+            .collect();
 
-    pub fn show_donations_sum(&self) -> BalanceHumanReadable {
-        from_yocto_near(self.sum)
-    }
+        let sum = from_yocto_near(self.sum);
 
-    pub fn show_fundraiser(&self) -> AccountId {
-        self.fundraiser.clone()
+        DebugState { records, sum }
     }
 }
 
@@ -128,12 +143,13 @@ mod tests {
         testing_env!(context);
 
         let mut contract = create_contract("contract-owner");
+
+        assert!(contract.show_donations().is_empty());
+        assert_eq!(0, contract.show_donations_sum());
+
         contract.send_donation();
 
-        let donations_list = contract.show_donations();
-        let donations_sum = contract.show_donations_sum();
-
-        assert!(!donations_list.is_empty());
-        assert!(donations_sum != 0.0);
+        assert!(!contract.show_donations().is_empty());
+        assert!(contract.show_donations_sum() != 0);
     }
 }
