@@ -70,7 +70,10 @@ impl Donations {
     pub fn withdraw_donations(&mut self) -> Promise {
         require!(
             env::signer_account_id() == self.fundraiser,
-            "Owner's method"
+            format!(
+                "this method permitted only for contract owner '{}'",
+                self.fundraiser
+            )
         );
 
         let transfer_amount = self.sum;
