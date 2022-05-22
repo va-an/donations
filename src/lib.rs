@@ -24,11 +24,12 @@ pub struct Record {
     amount: Balance,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct RecordJson {
-    from: AccountId,
-    donation: BalanceHumanReadable,
+    who: AccountId,
+    operation: Operation,
+    amount: BalanceHumanReadable,
 }
 
 #[derive(Debug, Serialize)]
@@ -113,8 +114,9 @@ impl Donations {
             .records
             .iter()
             .map(|record| RecordJson {
-                from: record.who,
-                donation: from_yocto_near(record.amount),
+                who: record.who,
+                operation: record.operation,
+                amount: from_yocto_near(record.amount),
             })
             .collect();
 
@@ -187,7 +189,7 @@ mod tests {
         assert_eq!(1, contract.show_history().len());
 
         let history = contract.show_history();
-        let record = history.first().unwrap();
+        let record = history.last().unwrap();
         assert_eq!(Operation::Donation, record.operation);
         assert_eq!(attached_deposit, record.amount);
 
@@ -196,6 +198,11 @@ mod tests {
         testing_env!(context);
 
         contract.withdraw_donations();
+        let history = contract.show_history();
+        let record = history.last().unwrap();
+
+        assert_eq!(2, history.len());
+        assert_eq!(Operation::Withdrawal, record.operation);
         assert_eq!(0, contract.show_donations_sum());
     }
 
