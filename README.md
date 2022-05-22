@@ -3,26 +3,37 @@
 ## Description
 This contract implements donations functional - users can send donations in NEARs to contract, and only contract owner can withdraw this donations.
 
-## Example
+## Example Story
 1. Mike deploys contract and sets `fundraiser` address as `mike.near`.
 2. Alice and Bob decided to send donation to Mike, they checks that `fundraiser` is Mike's address.
 3. Alice sends 1 NEAR donations to contract.
 4. Bob sends 1.5 NEAR donations to contract.
 5. Mike sees these donations in history.
-6. Mike withdraws donations from Alice and Bob to `mike.near`
+6. Mike withdraws donations (2.5 NEARs) from Alice and Bob to `mike.near`
 7. Alice and Bob sees in history that Mike withdrew donations.
 
 # Build
+add build target:
+```bash
+rustup target add wasm32-unknown-unknown
+```
+then build:
 ```bash
 cargo build --target wasm32-unknown-unknown --release
 ```
 # API
 ## View methods
 ```rust
-pub fn show_donations(&self) -> Vec<Record>; // show donations history
-pub fn show_donations_sum(&self) -> Balance; // show current donations sum 
-pub fn show_fundraiser(&self) -> AccountId;  // show contract owner
-pub fn current_state(&self) -> DebugState;   // debug info
+pub fn show_history(&self) -> Vec<Record>;
+pub fn show_donations_sum(&self) -> Balance;
+pub fn show_fundraiser(&self) -> AccountId;
+pub fn current_state(&self) -> DebugState;  // for debug
+```
+
+## Call methods
+```rust
+pub fn send_donation(&mut self);
+pub fn withdraw_donations(&mut self) -> Promise;
 ```
 ---
 
