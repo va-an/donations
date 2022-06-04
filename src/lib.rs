@@ -1,7 +1,7 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Vector;
 use near_sdk::{env, log, near_bindgen, require, AccountId, Balance, PanicOnDefault, Promise};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 type BalanceHumanReadable = f64;
 
