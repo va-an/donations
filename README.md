@@ -3,6 +3,8 @@
 ## Description
 This contract implements donations functional - users can send donations in NEARs to contract, and only contract owner can withdraw this donations.
 
+Contract deployed on testnet address `donations.va-an.testnet`.
+
 ## Example Story
 1. Mike deploys contract and sets `fundraiser` address as `mike.near`.
 2. Alice and Bob decided to send donation to Mike, they checks that `fundraiser` is Mike's address.
@@ -38,8 +40,7 @@ pub fn withdraw_donations(&mut self) -> Promise;
 ```
 ---
 
-# usage examples for [near-cli](https://docs.near.org/docs/tools/near-cli)
-Donations contract deployed on testnet address `donations.va-an.testnet`.
+# Usage examples for [near-cli](https://docs.near.org/docs/tools/near-cli)
 Some examples for near-cli below.
 
 deploy and init contract
