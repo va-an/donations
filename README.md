@@ -19,6 +19,11 @@ add build target:
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
+run tests:
+```bash
+cargo test
+```
+
 then build:
 ```bash
 cargo build --target wasm32-unknown-unknown --release
